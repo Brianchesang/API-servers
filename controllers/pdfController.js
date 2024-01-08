@@ -10,8 +10,19 @@ exports.convertToPdf = (req, res) => {
 
   const wordFile = req.files.wordFile;
 
+  // Create a temporary file path
+  const tempFilePath = `/tmp/${wordFile.name.replace(/\s+/g, '_').toLowerCase()}.docx`;
+
+  try {
+    // Write the Word document to the temporary file
+    fs.writeFileSync(tempFilePath, wordFile.data);
+  } catch (err) {
+    console.error('Error writing file:', err);
+    return res.status(500).send('Error writing file');
+  }
+
   // Read the Word document content using docxtemplater
-  const content = fs.readFileSync(wordFile.path, 'binary');
+  const content = fs.readFileSync(tempFilePath, 'binary');
   const doc = new Docxtemplater(content);
 
   // Set data for the Word template (customize as needed)
@@ -36,5 +47,8 @@ exports.convertToPdf = (req, res) => {
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename=${wordFile.name.replace(/\s+/g, '_').toLowerCase()}.pdf`);
     res.send(buffer);
+
+    // Cleanup: Remove the temporary file
+    fs.unlinkSync(tempFilePath);
   });
 };
