@@ -10,7 +10,7 @@ exports.convertToPdf = (req, res) => {
   const wordFile = req.files.wordFile;
 
   // Read the Word document content using mammoth
-  mammoth.extractRawText({ arrayBuffer: wordFile.data })
+  mammoth.extractRawText({ arrayBuffer: wordFile.buffer })  // Use wordFile.buffer instead of wordFile.data
     .then(result => {
       const htmlContent = `<h1>${result.value}</h1>`; // Placeholder. Customize based on your actual content.
 
