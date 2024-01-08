@@ -1,5 +1,6 @@
 // controllers/pdfController.js
 const pdf = require('html-pdf');
+const mammoth = require('mammoth');
 
 exports.convertToPdf = (req, res) => {
   if (!req.files || !req.files.wordFile) {
@@ -8,8 +9,26 @@ exports.convertToPdf = (req, res) => {
 
   const wordFile = req.files.wordFile;
 
-  // Use the wordFile data as needed, e.g., save it, process it, etc.
+  // Read the Word document content using mammoth
+  mammoth.extractRawText({ arrayBuffer: wordFile.data })
+    .then(result => {
+      const htmlContent = `<h1>${result.value}</h1>`; // Placeholder. Customize based on your actual content.
 
-  // Placeholder response for now
-  res.send('File uploaded successfully.');
+      // Convert HTML to PDF
+      pdf.create(htmlContent).toBuffer((err, buffer) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).send('Internal Server Error');
+        }
+
+        // Set the response headers for PDF
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=${wordFile.name.replace(/\s+/g, '_').toLowerCase()}.pdf`);
+        res.send(buffer);
+      });
+    })
+    .catch(err => {
+      console.error(err);
+      res.status(500).send('Error converting Word to PDF');
+    });
 };
